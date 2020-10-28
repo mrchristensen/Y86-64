@@ -12,10 +12,27 @@ void fetchStage(int *icode, int *ifun, int *rA, int *rB, wordType *valC, wordTyp
   *icode = (byte >> 4) & 0xf;
   *ifun = byte & 0xf;
 
-  if(*icode == HALT) {
+  if(*icode == HALT) { //HALT
     *valP = pc + 1;
     setStatus(STAT_HLT);
   }
+
+  if(*icode == NOP) { //NOP
+    *valP = pc + 1;
+  }
+
+  //RRMOVQ
+  //CMOVXX
+  //IRMOVQ
+  //RMMOVQ
+  //MRMOVQ
+  //OPQ (ADD, SUB, XOR, AND)
+  //JXX
+  //CALL
+  //RET
+  //PUSHQ
+  //POPQ
+
   else {
     printf("ERROR - icode not implemented: %d", *icode);
   }
@@ -38,7 +55,9 @@ void writebackStage(int icode, wordType rA, wordType rB, wordType valE, wordType
 }
 
 void pcUpdateStage(int icode, wordType valC, wordType valP, bool Cnd, wordType valM) {
-  setPC(valP); 
+  if(icode == HALT || icode == NOP) {
+    setPC(valP); 
+  }
 }
 
 void stepMachine(int stepMode) {
