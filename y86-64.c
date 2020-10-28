@@ -6,7 +6,19 @@
 const int MAX_MEM_SIZE  = (1 << 13);
 
 void fetchStage(int *icode, int *ifun, int *rA, int *rB, wordType *valC, wordType *valP) {
- 
+  wordType pc = getPC();
+  byteType byte = getByteFromMemory(pc);
+
+  *icode = (byte >> 4) & 0xf;
+  *ifun = byte & 0xf;
+
+  if(*icode == HALT) {
+    *valP = pc + 1;
+    setStatus(STAT_HLT);
+  }
+  else {
+    printf("ERROR - icode not implemented: %d", *icode);
+  }
 }
 
 void decodeStage(int icode, int rA, int rB, wordType *valA, wordType *valB) {
@@ -26,7 +38,7 @@ void writebackStage(int icode, wordType rA, wordType rB, wordType valE, wordType
 }
 
 void pcUpdateStage(int icode, wordType valC, wordType valP, bool Cnd, wordType valM) {
-  
+  setPC(valP); 
 }
 
 void stepMachine(int stepMode) {
