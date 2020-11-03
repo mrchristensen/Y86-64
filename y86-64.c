@@ -30,7 +30,7 @@ void fetchStage(int *icode, int *ifun, int *rA, int *rB, wordType *valC, wordTyp
   
   //CMOVXX
   
-  if(*icode == IRMOVQ || RMMOVQ) { //IRMOVQ and RMMOVQ
+  if(*icode == IRMOVQ || *icode == RMMOVQ || *icode == MRMOVQ) { //IRMOVQ and RMMOVQ and MRMOVQ
     byte = getByteFromMemory(pc + 1);
     *rA = (byte >> 4) & 0xf;
     *rB = byte & 0xf;
@@ -38,13 +38,16 @@ void fetchStage(int *icode, int *ifun, int *rA, int *rB, wordType *valC, wordTyp
     *valP = pc + 10;
   }
 
-  
-  //MRMOVQ
   //OPQ (ADD, SUB, XOR, AND)
+
   //JXX
+
   //CALL
+
   //RET
+
   //PUSHQ
+
   //POPQ
 
   else {
@@ -57,9 +60,13 @@ void decodeStage(int icode, int rA, int rB, wordType *valA, wordType *valB) {
     *valA = getRegister(rA);
   }
 
-  if (icode == RMMOVQ) { //RMMOVQ
+  if(icode == RMMOVQ) { //RMMOVQ
     *valA = getRegister(rA);
     *valB = getRegister(rB); 
+  }
+
+  if(icode == MRMOVQ) { //MRMOVQ
+    *valB = getRegister(rB);
   }
 }
 
@@ -68,8 +75,8 @@ void executeStage(int icode, int ifun, wordType valA, wordType valB, wordType va
     *valE = 0 + valC;
   }
 
-  if(icode == RMMOVQ) { //RMMOVQ
-    *valE = valB+ valC;
+  if(icode == RMMOVQ || icode == MRMOVQ) { //RMMOVQ and MRMOVQ
+    *valE = valB + valC;
   }
 }
 
@@ -77,16 +84,24 @@ void memoryStage(int icode, wordType valA, wordType valP, wordType valE, wordTyp
   if(icode == RMMOVQ) { //RMMOVQ
     setWordInMemory(valE, valA); //Todo: check to see if this should be Word or Byte
   }
+
+  if(icode == MRMOVQ) { //MRMOVQ
+    *valM = getWordFromMemory(valE);
+  }
 }
 
 void writebackStage(int icode, wordType rA, wordType rB, wordType valE, wordType valM) {
   if(icode == IRMOVQ || icode == RRMOVQ) {
     setRegister(rB, valE);
   }
+
+  if(icode == MRMOVQ) { //MRMOVQ
+    setRegister(rA, valM);
+  }
 }
 
 void pcUpdateStage(int icode, wordType valC, wordType valP, bool Cnd, wordType valM) {
-  if(icode == HALT || icode == NOP || icode == IRMOVQ || icode == RRMOVQ || icode == RMMOVQ) {
+  if(icode == HALT || icode == NOP || icode == IRMOVQ || icode == RRMOVQ || icode == RMMOVQ || icode == MRMOVQ) {
     setPC(valP); 
   }
 }
