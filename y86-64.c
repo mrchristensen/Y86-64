@@ -91,9 +91,10 @@ void fetchStage(int *icode, int *ifun, int *rA, int *rB, wordType *valC, wordTyp
     *valP = pc + 10;
   }
 
-  //OPQ (ADD, SUB, XOR, AND)
-
-  //JXX
+  if(*icode == JXX) { //JXX
+    *valC = getByteFromMemory(pc + 1);
+    *valP = pc + 9;
+  }
 
   //CALL
 
@@ -137,6 +138,10 @@ void executeStage(int icode, int ifun, wordType valA, wordType valB, wordType va
     
     setConditionCodes(ifun, valA, valB, *valE);
   }
+
+  if(icode == JXX) { //JXX
+    *Cnd = Cond(ifun);
+  }
 }
 
 void memoryStage(int icode, wordType valA, wordType valP, wordType valE, wordType *valM) {
@@ -162,6 +167,10 @@ void writebackStage(int icode, wordType rA, wordType rB, wordType valE, wordType
 void pcUpdateStage(int icode, wordType valC, wordType valP, bool Cnd, wordType valM) {
   if(icode == HALT || icode == NOP || icode == IRMOVQ || icode == RRMOVQ || icode == RMMOVQ || icode == MRMOVQ || icode == OPQ) {
     setPC(valP); 
+  }
+
+  if(icode == JXX) { //JXX
+    setPC(Cnd ? valC : valP);
   }
 }
 
