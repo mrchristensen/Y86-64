@@ -5,6 +5,59 @@
 
 const int MAX_MEM_SIZE  = (1 << 13);
 
+void setConditionCodes(int ifun, wordType valA, wordType valB, wordType valE) { //TODO should positive be x > 0 instead of x >= 0
+  bool sf = FALSE;
+  bool zf = FALSE;
+  bool of = FALSE;
+
+  if(valE < 0) { //Sign flag if negative
+    sf = TRUE;
+  }
+
+  if(valE == 0) { //Zero flag if zero
+    zf = TRUE;
+  }
+
+  //Subtraction Overflow
+  if(ifun == SUB && valB >= 0 && valA < 0 && valE < 0) { //Overflow flag for subtraction if (+B) − (−A) = −E
+    of = TRUE;
+  }
+  if(ifun == SUB && valB < 0 && valA >= 0 && valE >=0) { //Overflow flag for subtraction if (−B) − (+A) = +E
+    of = TRUE;
+  }
+
+  //Addition Overflow
+  if(ifun == ADD && valA >= 0 && valB >= 0 && valE < 0) { //Overflow flag for addition if (+B) + (+A) = −E
+    of = TRUE;  
+  }
+  if(ifun == ADD && valB < 0 && valA < 0 && valE >= 0) { //Overflow flag for addition if (−B) + (−A) = +E
+    of = TRUE;
+  }
+
+  setFlags(sf, zf, of);
+
+  return;
+}
+
+wordType evalOp(wordType valA, wordType valB, int ifun) {
+  if(ifun == ADD) {
+    return valB + valA;
+  }
+  else if(ifun == SUB) {
+    return valB - valA;
+  }
+  else if(ifun == AND) {
+   return (valB & valA);
+  }
+  else if(ifun == XOR) {
+   return (valB ^ valA);
+  }
+  else {
+    printf("Error, ifun of %d does not match any mode of operation (ADD, SUB, AND, XOR)", ifun);
+    return NULL; //TODO fix this warning
+  }
+}
+
 void fetchStage(int *icode, int *ifun, int *rA, int *rB, wordType *valC, wordType *valP) {
   wordType pc = getPC();
   byteType byte = getByteFromMemory(pc);
@@ -21,7 +74,7 @@ void fetchStage(int *icode, int *ifun, int *rA, int *rB, wordType *valC, wordTyp
     *valP = pc + 1;
   }
 
-  if(*icode == RRMOVQ) { //RRMOVQ
+  if(*icode == RRMOVQ || *icode == OPQ) { //RRMOVQ and OPQ
     byte = getByteFromMemory(pc + 1);
     *rA = (byte >> 4) & 0xf;
     *rB = byte & 0xf;
@@ -60,7 +113,7 @@ void decodeStage(int icode, int rA, int rB, wordType *valA, wordType *valB) {
     *valA = getRegister(rA);
   }
 
-  if(icode == RMMOVQ) { //RMMOVQ
+  if(icode == RMMOVQ || icode == OPQ) { //RMMOVQ and OPQ
     *valA = getRegister(rA);
     *valB = getRegister(rB); 
   }
@@ -78,11 +131,17 @@ void executeStage(int icode, int ifun, wordType valA, wordType valB, wordType va
   if(icode == RMMOVQ || icode == MRMOVQ) { //RMMOVQ and MRMOVQ
     *valE = valB + valC;
   }
+
+  if(icode == OPQ) { //OPQ
+    *valE = evalOp(valA, valB, ifun);
+    
+    setConditionCodes(ifun, valA, valB, *valE);
+  }
 }
 
 void memoryStage(int icode, wordType valA, wordType valP, wordType valE, wordType *valM) {
   if(icode == RMMOVQ) { //RMMOVQ
-    setWordInMemory(valE, valA); //Todo: check to see if this should be Word or Byte
+    setWordInMemory(valE, valA); //TODO: check to see if this should be Word or Byte
   }
 
   if(icode == MRMOVQ) { //MRMOVQ
@@ -91,7 +150,7 @@ void memoryStage(int icode, wordType valA, wordType valP, wordType valE, wordTyp
 }
 
 void writebackStage(int icode, wordType rA, wordType rB, wordType valE, wordType valM) {
-  if(icode == IRMOVQ || icode == RRMOVQ) {
+  if(icode == IRMOVQ || icode == RRMOVQ || icode == OPQ) { //IRMOVQ RRMOVQ OPQ
     setRegister(rB, valE);
   }
 
@@ -101,7 +160,7 @@ void writebackStage(int icode, wordType rA, wordType rB, wordType valE, wordType
 }
 
 void pcUpdateStage(int icode, wordType valC, wordType valP, bool Cnd, wordType valM) {
-  if(icode == HALT || icode == NOP || icode == IRMOVQ || icode == RRMOVQ || icode == RMMOVQ || icode == MRMOVQ) {
+  if(icode == HALT || icode == NOP || icode == IRMOVQ || icode == RRMOVQ || icode == RMMOVQ || icode == MRMOVQ || icode == OPQ) {
     setPC(valP); 
   }
 }
