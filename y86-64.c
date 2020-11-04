@@ -5,7 +5,7 @@
 
 const int MAX_MEM_SIZE  = (1 << 13);
 
-void setConditionCodes(int ifun, wordType valA, wordType valB, wordType valE) { //TODO should positive be x > 0 instead of x >= 0
+void setConditionCodes(int ifun, wordType valA, wordType valB, wordType valE) {
   bool sf = FALSE;
   bool zf = FALSE;
   bool of = FALSE;
@@ -161,7 +161,7 @@ void executeStage(int icode, int ifun, wordType valA, wordType valB, wordType va
 
 void memoryStage(int icode, wordType valA, wordType valP, wordType valE, wordType *valM) {
   if(icode == RMMOVQ || icode == PUSHQ) { //RMMOVQ and PUSHQ
-    setWordInMemory(valE, valA); //TODO: check to see if this should be Word or Byte
+    setWordInMemory(valE, valA);
   }
 
   if(icode == MRMOVQ) { //MRMOVQ
