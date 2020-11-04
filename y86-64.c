@@ -96,8 +96,6 @@ void fetchStage(int *icode, int *ifun, int *rA, int *rB, wordType *valC, wordTyp
     *valP = pc + 9;
   }
 
-  //RET
-
   //PUSHQ
 
   //POPQ
@@ -124,6 +122,11 @@ void decodeStage(int icode, int rA, int rB, wordType *valA, wordType *valB) {
   if(icode == CALL) { //CALL
     *valB = getRegister(RSP);
   }
+
+  if(icode == RET) { //RET
+    *valA = getRegister(RSP);
+    *valB = getRegister(RSP);
+  }
 }
 
 void executeStage(int icode, int ifun, wordType valA, wordType valB, wordType valC, wordType *valE, bool *Cnd) {
@@ -148,6 +151,10 @@ void executeStage(int icode, int ifun, wordType valA, wordType valB, wordType va
   if(icode == CALL) { //CALL
     *valE = valB + (-8);
   }
+
+  if(icode == RET) { //RET
+    *valE = valB + (8);
+  }
 }
 
 void memoryStage(int icode, wordType valA, wordType valP, wordType valE, wordType *valM) {
@@ -162,6 +169,10 @@ void memoryStage(int icode, wordType valA, wordType valP, wordType valE, wordTyp
   if(icode == CALL) { //CALL
     setWordInMemory(valE, valP);
   }
+
+  if(icode == RET) { //RET
+    *valM = getWordFromMemory(valA); //Todo should this be word or byte?
+  }
 }
 
 void writebackStage(int icode, wordType rA, wordType rB, wordType valE, wordType valM) {
@@ -173,7 +184,7 @@ void writebackStage(int icode, wordType rA, wordType rB, wordType valE, wordType
     setRegister(rA, valM);
   }
 
-  if(icode == CALL) { //CALL
+  if(icode == CALL || icode == RET) { //CALL and RET
     setRegister(RSP, valE);
   }
 }
@@ -189,6 +200,10 @@ void pcUpdateStage(int icode, wordType valC, wordType valP, bool Cnd, wordType v
 
   if(icode == CALL) { //CALL
     setPC(valC);
+  }
+
+  if(icode == RET) { //RET
+    setPC(valM);
   }
 }
 
