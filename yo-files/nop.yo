@@ -1,0 +1,13 @@
+OBJECT CODE
+0x0000:                        | main:
+0x0000: 10                     |     nop
+0x0001: 10                     |     nop
+0x0002: 10                     |     nop
+0x0003: 10                     |     nop
+0x0004: 10                     |     nop
+0x0005: 10                     |     nop
+0x0006: 10                     |     nop
+0x0007: 10                     |     nop
+0x0008: 00                     |     halt
+                               |     
+

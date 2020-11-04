@@ -1,0 +1,152 @@
+0x0000:                        | .pos 0
+0x0000:                        | Init:
+0x0000: 30f50001000000000000   | 	irmovq Stack, %rbp
+0x000a: 30f40001000000000000   | 	irmovq Stack, %rsp
+0x0014: 700401000000000000     | 	jmp Main
+                               | 
+0x001d:                        | .pos 0x100
+0x0100:                        | Stack:
+                               | 
+0x0100:                        | .pos 0x104
+0x0104:                        | Main:
+                               | 	# Zero argument call
+0x0104: f0                     | 	brk
+0x0105: 80ca01000000000000     | 	call ZeroArgs
+                               | 
+0x010e: 80bd01000000000000     | 	call ResetRegisters
+                               | 
+                               | 	# One argument call
+0x0117: f0                     | 	brk
+0x0118: 30f30100000000000000   | 	irmovq $1, %rbx
+0x0122: a03f                   | 	pushq %rbx
+0x0124: 80d301000000000000     | 	call OneArgs
+0x012d: 2054                   | 	rrmovq %rbp, %rsp
+                               | 
+0x012f: 80bd01000000000000     | 	call ResetRegisters
+                               | 
+                               | 	# Two argument call
+0x0138: f0                     | 	brk
+0x0139: 30f60300000000000000   | 	irmovq $3, %rsi
+0x0143: 30f70200000000000000   | 	irmovq $2, %rdi
+0x014d: a07f                   | 	pushq %rdi
+0x014f: a06f                   | 	pushq %rsi
+0x0151: 80e601000000000000     | 	call TwoArgs
+0x015a: 2054                   | 	rrmovq %rbp, %rsp
+                               | 
+0x015c: 80bd01000000000000     | 	call ResetRegisters
+                               | 
+                               | 	# Local variables on the stack
+0x0165: f0                     | 	brk
+0x0166: 800502000000000000     | 	call LocalVars
+                               | 
+0x016f: 80bd01000000000000     | 	call ResetRegisters
+                               | 
+                               | 	# Caller save -- watch the values of %rcx and %rdx! Here, we set them to
+                               | 	# 1 and 2, but CallerSave will modify them.
+0x0178: f0                     | 	brk
+0x0179: 30f10100000000000000   | 	irmovq $1, %rcx
+0x0183: 30f20200000000000000   | 	irmovq $2, %rdx
+0x018d: a01f                   | 	pushq %rcx  # To retain the current register values, push them onto the stack.
+0x018f: a02f                   | 	pushq %rdx
+0x0191: 802f02000000000000     | 	call CallerSave  # Callee is free to modify %rcx and %rdx.
+0x019a: b02f                   | 	popq %rdx
+0x019c: b01f                   | 	popq %rcx  # To get our old register values back, pop them off the stack.
+                               | 
+0x019e: 80bd01000000000000     | 	call ResetRegisters
+                               | 
+                               | 	# Callee save -- watch the value of %rbx!
+0x01a7: f0                     | 	brk
+0x01a8: 30f32923000000000000   | 	irmovq $9001, %rbx
+0x01b2: 805002000000000000     | 	call CalleeSave
+0x01bb: 10                     | 	nop # Immediately after returning, our value of %rbx is what we had it as before.
+                               | 
+0x01bc: 00                     | 	halt
+                               | 
+0x01bd:                        | ResetRegisters:
+0x01bd: 6300                   | 	xorq %rax, %rax
+0x01bf: 6333                   | 	xorq %rbx, %rbx
+0x01c1: 6311                   | 	xorq %rcx, %rcx
+0x01c3: 6322                   | 	xorq %rdx, %rdx
+0x01c5: 6366                   | 	xorq %rsi, %rsi
+0x01c7: 6377                   | 	xorq %rdi, %rdi
+0x01c9: 90                     | 	ret
+                               | 
+                               | # Creates a new stack frame and destroys it.
+0x01ca:                        | ZeroArgs:
+0x01ca: a05f                   | 	pushq %rbp
+0x01cc: 2045                   | 	rrmovq %rsp, %rbp
+                               | 
+0x01ce: 2054                   | 	rrmovq %rbp, %rsp
+0x01d0: b05f                   | 	popq %rbp
+0x01d2: 90                     | 	ret
+                               | 
+                               | # Returns the argument passed.
+0x01d3:                        | OneArgs:
+0x01d3: a05f                   | 	pushq %rbp
+0x01d5: 2045                   | 	rrmovq %rsp, %rbp
+                               | 
+0x01d7: 50050800000000000000   | 	mrmovq 8(%rbp), %rax  # Puts the first argument in %rax to return.
+                               | 
+0x01e1: 2054                   | 	rrmovq %rbp, %rsp
+0x01e3: b05f                   | 	popq %rbp
+0x01e5: 90                     | 	ret
+                               | 
+                               | # Subtracts the second argument from the first argument.
+0x01e6:                        | TwoArgs:
+0x01e6: a05f                   | 	pushq %rbp
+0x01e8: 2045                   | 	rrmovq %rsp, %rbp
+                               | 
+0x01ea: 50050800000000000000   | 	mrmovq 8(%rbp), %rax   # First argument
+0x01f4: 50250c00000000000000   | 	mrmovq 12(%rbp), %rdx  # Second argument
+                               | 
+0x01fe: 6120                   | 	subq %rdx, %rax        # eax = eax - edx
+                               | 	
+0x0200: 2054                   | 	rrmovq %rbp, %rsp
+0x0202: b05f                   | 	popq %rbp
+0x0204: 90                     | 	ret
+                               | 
+                               | # Creates 15 local variables on the stack, then returns 0.
+0x0205:                        | LocalVars:
+0x0205: a05f                   | 	pushq %rbp
+0x0207: 2045                   | 	rrmovq %rsp, %rbp
+                               | 
+0x0209: 30f00f00000000000000   | 	irmovq $15, %rax
+0x0213: 30f30100000000000000   | 	irmovq $1, %rbx
+                               | 
+0x021d:                        | LocalVars_Loop:
+0x021d: a00f                   | 	pushq %rax
+0x021f: 6130                   | 	subq %rbx, %rax
+0x0221: 741d02000000000000     | 	jne LocalVars_Loop
+                               | 
+0x022a:                        | LocalVars_End:
+0x022a: 2054                   | 	rrmovq %rbp, %rsp
+0x022c: b05f                   | 	popq %rbp
+0x022e: 90                     | 	ret
+                               | 
+                               | # Caller-save register demonstration. Mangles %rcx and %rdx and returns 7.
+0x022f:                        | CallerSave:
+0x022f: a05f                   | 	pushq %rbp
+0x0231: 2045                   | 	rrmovq %rsp, %rbp
+                               | 
+0x0233: 30f10300000000000000   | 	irmovq $3, %rcx
+0x023d: 30f20400000000000000   | 	irmovq $4, %rdx
+0x0247: 6012                   | 	addq %rcx, %rdx
+0x0249: 2020                   | 	rrmovq %rdx, %rax
+                               | 
+0x024b: 2054                   | 	rrmovq %rbp, %rsp
+0x024d: b05f                   | 	popq %rbp
+0x024f: 90                     | 	ret
+                               | 
+                               | # Callee-save register demonstration. Changes %rbx, but restores it.
+0x0250:                        | CalleeSave:
+0x0250: a05f                   | 	pushq %rbp
+0x0252: 2045                   | 	rrmovq %rsp, %rbp
+0x0254: a03f                   | 	pushq %rbx  # Save old register value, since it's callee-save.
+                               | 
+0x0256: 30f3d7dcffffffffffff   | 	irmovq $-9001, %rbx
+                               | 
+0x0260: b03f                   | 	popq %rbx  # Restore old register value.
+0x0262: 2054                   | 	rrmovq %rbp, %rsp
+0x0264: b05f                   | 	popq %rbp
+0x0266: 90                     | 	ret
+                               | 

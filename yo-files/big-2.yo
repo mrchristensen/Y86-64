@@ -1,0 +1,81 @@
+0x0000:                        | .pos 0
+0x0000:                        | Init:
+0x0000: 30f50001000000000000   |     irmovq Stack, %rbp
+0x000a: 30f40001000000000000   |     irmovq Stack, %rsp
+0x0014: 707a01000000000000     |     jmp Main
+                               | 
+0x001d:                        | .pos 0x100
+0x0100:                        | Stack:
+                               | 
+0x0100:                        | .pos 0x104
+                               | 
+                               | # __fastcall int Multiply (int x, int y)
+                               | # x is passed in as %rcx, y is passed in as %rdx.
+0x0104:                        | Multiply:
+                               |     # Set up stack frame.
+0x0104: a05f                   |     pushq %rbp
+0x0106: 2045                   |     rrmovq %rsp, %rbp
+0x0108: a06f                   |     pushq %rsi
+                               |     
+0x010a: 30f6ffffffffffffffff   |     irmovq $-1, %rsi  # rsi = -1
+0x0114: 6300                   |     xorq %rax, %rax   # rax = 0
+                               | 
+                               |     # Skip multiply loop silently if multiplying by <= 0.
+0x0116: 6222                   |     andq %rdx, %rdx
+0x0118: 712e01000000000000     |     jle Multiply_End
+                               | 
+0x0121:                        | Multiply_Loop:
+0x0121: 6010                   |     addq %rcx, %rax   # rax += rcx
+0x0123: 6062                   |     addq %rsi, %rdx   # rdx -= 1
+0x0125: 742101000000000000     |     jne Multiply_Loop # if (rdx != 0) goto Multiply_Loop
+                               | 
+0x012e:                        | Multiply_End:
+                               |     # Clean up stack frame.
+0x012e: b06f                   |     popq %rsi
+0x0130: 2054                   |     rrmovq %rbp, %rsp
+0x0132: b05f                   |     popq %rbp
+0x0134: 90                     |     ret
+                               | 
+                               | # _cdecl int pow (int base, int exp)
+0x0135:                        | Pow:
+                               |     # Set up stack frame.
+0x0135: a05f                   |     pushq %rbp
+0x0137: 2045                   |     rrmovq %rsp, %rbp
+                               |     
+0x0139: 30f6ffffffffffffffff   |     irmovq $-1, %rsi      # rsi = -1
+                               |     
+                               |     # We'll use %rsi to demonstrate callee-save in Multiply,
+                               |     # since Multiply uses the callee-save %rsi register.
+0x0143: 50151000000000000000   |     mrmovq 16(%rbp), %rcx  # rcx = base
+0x014d: 50751800000000000000   |     mrmovq 24(%rbp), %rdi # rdi = exp
+                               |     
+0x0157: 2012                   |     rrmovq %rcx, %rdx     # rdx = base
+0x0159: 6067                   |     addq %rsi, %rdi       # rdi -= 1
+                               | 
+0x015b:                        | Pow_Loop:
+0x015b: a02f                   |     pushq %rdx
+0x015d: 800401000000000000     |     call Multiply         # rax = rcx * edx
+0x0166: b02f                   |     popq %rdx
+0x0168: 6067                   |     addq %rsi, %rdi       # rdi -= 1
+0x016a: 2001                   |     rrmovq %rax, %rcx     # rcx = rax
+0x016c: 745b01000000000000     |     jne Pow_Loop          # if (rdi != 0) goto Pow_Loop
+                               | 
+0x0175:                        | Pow_End:
+                               |     # Clean up stack frame.
+0x0175: 2054                   |     rrmovq %rbp, %rsp
+0x0177: b05f                   |     popq %rbp
+0x0179: 90                     |     ret
+                               | 
+0x017a:                        | Main:
+0x017a: f0                     |     brk
+                               | 
+                               |     # rax = Pow(3, 4)
+0x017b: 30f00300000000000000   |     irmovq $3, %rax # base
+0x0185: 30f30400000000000000   |     irmovq $4, %rbx # exponent
+0x018f: a03f                   |     pushq %rbx
+0x0191: a00f                   |     pushq %rax
+0x0193: 803501000000000000     |     call Pow
+0x019c: 2054                   |     rrmovq %rbp, %rsp
+                               | 
+0x019e: 00                     |     halt
+                               |     

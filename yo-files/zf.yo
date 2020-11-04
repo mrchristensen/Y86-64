@@ -1,0 +1,6 @@
+0x0000:                        | main:
+0x0000: 30f0ffffffffffffffff   |     irmovq $-1, %rax
+0x000a: 30f1ffffffffffffffff   |     irmovq $-1, %rcx
+0x0014: 6110                   |     subq %rcx, %rax
+0x0016: 00                     |     halt
+                               |     
