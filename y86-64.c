@@ -74,14 +74,12 @@ void fetchStage(int *icode, int *ifun, int *rA, int *rB, wordType *valC, wordTyp
     *valP = pc + 1;
   }
 
-  if(*icode == RRMOVQ || *icode == OPQ || *icode == PUSHQ || *icode == POPQ) { //RRMOVQ and OPQ and PUSHQ and POPQ
+  if(*icode == RRMOVQ || *icode == OPQ || *icode == PUSHQ || *icode == POPQ || *icode == CMOVXX) { //RRMOVQ and OPQ and PUSHQ and POPQ and CMOVXX
     byte = getByteFromMemory(pc + 1);
     *rA = (byte >> 4) & 0xf;
     *rB = byte & 0xf;
     *valP = pc + 2;
   }
-  
-  //CMOVXX
   
   if(*icode == IRMOVQ || *icode == RMMOVQ || *icode == MRMOVQ) { //IRMOVQ and RMMOVQ and MRMOVQ
     byte = getByteFromMemory(pc + 1);
@@ -95,8 +93,6 @@ void fetchStage(int *icode, int *ifun, int *rA, int *rB, wordType *valC, wordTyp
     *valC = getByteFromMemory(pc + 1);
     *valP = pc + 9;
   }
-
-  //POPQ
 
   else {
     printf("ERROR - icode not implemented: %d", *icode); //TODO Remove this?
@@ -130,6 +126,11 @@ void decodeStage(int icode, int rA, int rB, wordType *valA, wordType *valB) {
     *valA = getRegister(rA);
     *valB = getRegister(RSP);
   }
+
+  if(icode == CMOVXX) { //CMOVXX
+    *valA = getRegister(rA);
+    *valB = 0;
+  }
 }
 
 void executeStage(int icode, int ifun, wordType valA, wordType valB, wordType valC, wordType *valE, bool *Cnd) {
@@ -158,6 +159,12 @@ void executeStage(int icode, int ifun, wordType valA, wordType valB, wordType va
   if(icode == RET || icode == POPQ) { //RET
     *valE = valB + (8);
   }
+
+  if(icode == CMOVXX) { //CMOVXX
+    *valE = valB + valA;
+
+    *Cnd = Cond(ifun);
+  }
 }
 
 void memoryStage(int icode, wordType valA, wordType valP, wordType valE, wordType *valM) {
@@ -178,7 +185,7 @@ void memoryStage(int icode, wordType valA, wordType valP, wordType valE, wordTyp
   }
 }
 
-void writebackStage(int icode, wordType rA, wordType rB, wordType valE, wordType valM) {
+void writebackStage(int icode, wordType rA, wordType rB, wordType valE, wordType valM, bool Cnd) {
   if(icode == IRMOVQ || icode == RRMOVQ || icode == OPQ) { //IRMOVQ RRMOVQ OPQ
     setRegister(rB, valE);
   }
@@ -194,6 +201,12 @@ void writebackStage(int icode, wordType rA, wordType rB, wordType valE, wordType
   if(icode == POPQ) { //POPQ
     setRegister(RSP, valE);
     setRegister(rA, valM);
+  }
+
+  if(icode == CMOVXX) { //CMOVXX
+    if(Cnd){ 
+      setRegister(rB, valE);
+    }
   }
 }
 
@@ -245,7 +258,7 @@ void stepMachine(int stepMode) {
   memoryStage(icode, valA, valP, valE, &valM);
   applyStageStepMode(stepMode, "Memory", icode, ifun, rA, rB, valC, valP, valA, valB, valE, Cnd, valM);
   
-  writebackStage(icode, rA, rB, valE, valM);
+  writebackStage(icode, rA, rB, valE, valM, Cnd);
   applyStageStepMode(stepMode, "Writeback", icode, ifun, rA, rB, valC, valP, valA, valB, valE, Cnd, valM);
   
   pcUpdateStage(icode, valC, valP, Cnd, valM);
