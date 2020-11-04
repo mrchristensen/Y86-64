@@ -1,0 +1,67 @@
+rmovq $10,%rax # Register storing how many blocks of data to sort.
+
+irmovq $1, %rsp #holds 1
+irmovq $8, %rbp #holds 8
+    
+init:
+    irmovq data, %rdi #ptr for data[i]
+    rrmovq %rax, %rcx #n
+    subq %rsp, %rcx #n-1
+    irmovq $0, %r14 #set swapped to false
+    jmp ittrLoop
+    
+check: #Move through the list
+    andq %r14, %r14 #check if we swapped
+    je end #no swap means we're done
+    jmp init
+
+ittrLoop:
+        #get vals
+        mrmovq 0(%rdi), %r8 #get first val
+        addq %rbp, %rdi #move pointer to next val
+        mrmovq 0(%rdi), %r10 ##get second val
+        
+        #compare vals
+        rrmovq %r8, %r9
+        subq %r10, %r9
+        jg swap
+        
+        resume:
+            #check to see if we're at the last thing
+            subq %rsp, %rcx
+            jle check #if second to last thing jump to check
+        
+            jmp ittrLoop #else continue forward
+
+end:
+    halt
+
+swap:
+    irmovq $1, %r14 #set swapped to true
+    
+    #swap:
+    rrmovq %rdi, %rsi #copy the ptr to second val
+    subq %rbp, %rsi #move %rsi to point to first val
+    
+    mrmovq 0(%rsi), %r11 #get first val
+    mrmovq 0(%rdi), %r12 #get second val
+    
+    rmmovq %r11, 0(%rdi) #put first val into second addr
+    rmmovq %r12, 0(%rsi) #put second val into first addr
+
+    
+    jmp resume
+
+.align 8
+data:
+    .quad 0x05
+    .quad 0x0a
+    .quad 0x08
+    .quad 0x02
+    .quad 0x01
+    .quad 0x03
+    .quad 0x06
+    .quad 0x04
+    .quad 0x09
+    .quad 0x07
+

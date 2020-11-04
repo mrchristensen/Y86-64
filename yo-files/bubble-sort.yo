@@ -1,0 +1,67 @@
+0x0000: 30f00a00000000000000   | irmovq $10,%rax # Register storing how many blocks of data to sort.
+                               | 
+0x000a: 30f40100000000000000   | irmovq $1, %rsp #holds 1
+0x0014: 30f50800000000000000   | irmovq $8, %rbp #holds 8
+                               |     
+0x001e:                        | init:
+0x001e: 30f7d000000000000000   |     irmovq data, %rdi #ptr for data[i]
+0x0028: 2001                   |     rrmovq %rax, %rcx #n
+0x002a: 6141                   |     subq %rsp, %rcx #n-1
+0x002c: 30fe0000000000000000   |     irmovq $0, %r14 #set swapped to false
+0x0036: 705300000000000000     |     jmp ittrLoop
+                               |     
+0x003f:                        | check: #Move through the list
+0x003f: 62ee                   |     andq %r14, %r14 #check if we swapped
+0x0041: 738a00000000000000     |     je end #no swap means we're done
+0x004a: 701e00000000000000     |     jmp init
+                               | 
+0x0053:                        | ittrLoop:
+                               |         #get vals
+0x0053: 50870000000000000000   |         mrmovq 0(%rdi), %r8 #get first val
+0x005d: 6057                   |         addq %rbp, %rdi #move pointer to next val
+0x005f: 50a70000000000000000   |         mrmovq 0(%rdi), %r10 ##get second val
+                               |         
+                               |         #compare vals
+0x0069: 2089                   |         rrmovq %r8, %r9
+0x006b: 61a9                   |         subq %r10, %r9
+0x006d: 768b00000000000000     |         jg swap
+                               |         
+0x0076:                        |         resume:
+                               |             #check to see if we're at the last thing
+0x0076: 6141                   |             subq %rsp, %rcx
+0x0078: 713f00000000000000     |             jle check #if second to last thing jump to check
+                               |         
+0x0081: 705300000000000000     |             jmp ittrLoop #else continue forward
+                               | 
+0x008a:                        | end:
+0x008a: 00                     |     halt
+                               | 
+0x008b:                        | swap:
+0x008b: 30fe0100000000000000   |     irmovq $1, %r14 #set swapped to true
+                               |     
+                               |     #swap:
+0x0095: 2076                   |     rrmovq %rdi, %rsi #copy the ptr to second val
+0x0097: 6156                   |     subq %rbp, %rsi #move %rsi to point to first val
+                               |     
+0x0099: 50b60000000000000000   |     mrmovq 0(%rsi), %r11 #get first val
+0x00a3: 50c70000000000000000   |     mrmovq 0(%rdi), %r12 #get second val
+                               |     
+0x00ad: 40b70000000000000000   |     rmmovq %r11, 0(%rdi) #put first val into second addr
+0x00b7: 40c60000000000000000   |     rmmovq %r12, 0(%rsi) #put second val into first addr
+                               | 
+                               |     
+0x00c1: 707600000000000000     |     jmp resume
+                               | 
+0x00ca:                        | .align 8
+0x00d0:                        | data:
+0x00d0: 05                     |     .quad 0x05
+0x00d8: 0a                     |     .quad 0x0a
+0x00e0: 08                     |     .quad 0x08
+0x00e8: 02                     |     .quad 0x02
+0x00f0: 01                     |     .quad 0x01
+0x00f8: 03                     |     .quad 0x03
+0x0100: 06                     |     .quad 0x06
+0x0108: 04                     |     .quad 0x04
+0x0110: 09                     |     .quad 0x09
+0x0118: 07                     |     .quad 0x07
+                               | 
