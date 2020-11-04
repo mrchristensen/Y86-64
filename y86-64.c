@@ -74,7 +74,7 @@ void fetchStage(int *icode, int *ifun, int *rA, int *rB, wordType *valC, wordTyp
     *valP = pc + 1;
   }
 
-  if(*icode == RRMOVQ || *icode == OPQ || *icode == PUSHQ) { //RRMOVQ and OPQ and PUSHQ
+  if(*icode == RRMOVQ || *icode == OPQ || *icode == PUSHQ || *icode == POPQ) { //RRMOVQ and OPQ and PUSHQ and POPQ
     byte = getByteFromMemory(pc + 1);
     *rA = (byte >> 4) & 0xf;
     *rB = byte & 0xf;
@@ -121,7 +121,7 @@ void decodeStage(int icode, int rA, int rB, wordType *valA, wordType *valB) {
     *valB = getRegister(RSP);
   }
 
-  if(icode == RET) { //RET
+  if(icode == RET || icode == POPQ) { //RET
     *valA = getRegister(RSP);
     *valB = getRegister(RSP);
   }
@@ -155,7 +155,7 @@ void executeStage(int icode, int ifun, wordType valA, wordType valB, wordType va
     *valE = valB + (-8);
   }
 
-  if(icode == RET) { //RET
+  if(icode == RET || icode == POPQ) { //RET
     *valE = valB + (8);
   }
 }
@@ -173,7 +173,7 @@ void memoryStage(int icode, wordType valA, wordType valP, wordType valE, wordTyp
     setWordInMemory(valE, valP);
   }
 
-  if(icode == RET) { //RET
+  if(icode == RET || icode == POPQ) { //RET and POPQ
     *valM = getWordFromMemory(valA); //Todo should this be word or byte?
   }
 }
@@ -190,10 +190,15 @@ void writebackStage(int icode, wordType rA, wordType rB, wordType valE, wordType
   if(icode == CALL || icode == RET || icode == PUSHQ) { //CALL and RET
     setRegister(RSP, valE);
   }
+
+  if(icode == POPQ) { //POPQ
+    setRegister(RSP, valE);
+    setRegister(rA, valM);
+  }
 }
 
 void pcUpdateStage(int icode, wordType valC, wordType valP, bool Cnd, wordType valM) {
-  if(icode == HALT || icode == NOP || icode == IRMOVQ || icode == RRMOVQ || icode == RMMOVQ || icode == MRMOVQ || icode == OPQ || icode == PUSHQ) {
+  if(icode == HALT || icode == NOP || icode == IRMOVQ || icode == RRMOVQ || icode == RMMOVQ || icode == MRMOVQ || icode == OPQ || icode == PUSHQ || icode == POPQ) {
     setPC(valP); 
   }
 
