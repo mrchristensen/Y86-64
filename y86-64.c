@@ -173,7 +173,7 @@ void memoryStage(int icode, wordType valA, wordType valP, wordType valE, wordTyp
   }
 
   if(icode == RET || icode == POPQ) { //RET and POPQ
-    *valM = getWordFromMemory(valA); //Todo should this be word or byte?
+    *valM = getWordFromMemory(valA);
   }
 }
 
