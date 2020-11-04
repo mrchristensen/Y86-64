@@ -91,12 +91,10 @@ void fetchStage(int *icode, int *ifun, int *rA, int *rB, wordType *valC, wordTyp
     *valP = pc + 10;
   }
 
-  if(*icode == JXX) { //JXX
+  if(*icode == JXX || *icode == CALL) { //JXX and CALL
     *valC = getByteFromMemory(pc + 1);
     *valP = pc + 9;
   }
-
-  //CALL
 
   //RET
 
@@ -105,7 +103,7 @@ void fetchStage(int *icode, int *ifun, int *rA, int *rB, wordType *valC, wordTyp
   //POPQ
 
   else {
-    printf("ERROR - icode not implemented: %d", *icode);
+    printf("ERROR - icode not implemented: %d", *icode); //TODO Remove this?
   }
 }
 
@@ -121,6 +119,10 @@ void decodeStage(int icode, int rA, int rB, wordType *valA, wordType *valB) {
 
   if(icode == MRMOVQ) { //MRMOVQ
     *valB = getRegister(rB);
+  }
+
+  if(icode == CALL) { //CALL
+    *valB = getRegister(RSP);
   }
 }
 
@@ -142,6 +144,10 @@ void executeStage(int icode, int ifun, wordType valA, wordType valB, wordType va
   if(icode == JXX) { //JXX
     *Cnd = Cond(ifun);
   }
+
+  if(icode == CALL) { //CALL
+    *valE = valB + (-8);
+  }
 }
 
 void memoryStage(int icode, wordType valA, wordType valP, wordType valE, wordType *valM) {
@@ -151,6 +157,10 @@ void memoryStage(int icode, wordType valA, wordType valP, wordType valE, wordTyp
 
   if(icode == MRMOVQ) { //MRMOVQ
     *valM = getWordFromMemory(valE);
+  }
+
+  if(icode == CALL) { //CALL
+    setWordInMemory(valE, valP);
   }
 }
 
@@ -162,6 +172,10 @@ void writebackStage(int icode, wordType rA, wordType rB, wordType valE, wordType
   if(icode == MRMOVQ) { //MRMOVQ
     setRegister(rA, valM);
   }
+
+  if(icode == CALL) { //CALL
+    setRegister(RSP, valE);
+  }
 }
 
 void pcUpdateStage(int icode, wordType valC, wordType valP, bool Cnd, wordType valM) {
@@ -171,6 +185,10 @@ void pcUpdateStage(int icode, wordType valC, wordType valP, bool Cnd, wordType v
 
   if(icode == JXX) { //JXX
     setPC(Cnd ? valC : valP);
+  }
+
+  if(icode == CALL) { //CALL
+    setPC(valC);
   }
 }
 
