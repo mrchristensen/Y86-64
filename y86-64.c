@@ -74,7 +74,7 @@ void fetchStage(int *icode, int *ifun, int *rA, int *rB, wordType *valC, wordTyp
     *valP = pc + 1;
   }
 
-  if(*icode == RRMOVQ || *icode == OPQ) { //RRMOVQ and OPQ
+  if(*icode == RRMOVQ || *icode == OPQ || *icode == PUSHQ) { //RRMOVQ and OPQ and PUSHQ
     byte = getByteFromMemory(pc + 1);
     *rA = (byte >> 4) & 0xf;
     *rB = byte & 0xf;
@@ -95,8 +95,6 @@ void fetchStage(int *icode, int *ifun, int *rA, int *rB, wordType *valC, wordTyp
     *valC = getByteFromMemory(pc + 1);
     *valP = pc + 9;
   }
-
-  //PUSHQ
 
   //POPQ
 
@@ -127,6 +125,11 @@ void decodeStage(int icode, int rA, int rB, wordType *valA, wordType *valB) {
     *valA = getRegister(RSP);
     *valB = getRegister(RSP);
   }
+
+  if(icode == PUSHQ) { //PUSHQ
+    *valA = getRegister(rA);
+    *valB = getRegister(RSP);
+  }
 }
 
 void executeStage(int icode, int ifun, wordType valA, wordType valB, wordType valC, wordType *valE, bool *Cnd) {
@@ -148,7 +151,7 @@ void executeStage(int icode, int ifun, wordType valA, wordType valB, wordType va
     *Cnd = Cond(ifun);
   }
 
-  if(icode == CALL) { //CALL
+  if(icode == CALL || icode == PUSHQ) { //CALL and PUSHQ
     *valE = valB + (-8);
   }
 
@@ -158,7 +161,7 @@ void executeStage(int icode, int ifun, wordType valA, wordType valB, wordType va
 }
 
 void memoryStage(int icode, wordType valA, wordType valP, wordType valE, wordType *valM) {
-  if(icode == RMMOVQ) { //RMMOVQ
+  if(icode == RMMOVQ || icode == PUSHQ) { //RMMOVQ and PUSHQ
     setWordInMemory(valE, valA); //TODO: check to see if this should be Word or Byte
   }
 
@@ -184,13 +187,13 @@ void writebackStage(int icode, wordType rA, wordType rB, wordType valE, wordType
     setRegister(rA, valM);
   }
 
-  if(icode == CALL || icode == RET) { //CALL and RET
+  if(icode == CALL || icode == RET || icode == PUSHQ) { //CALL and RET
     setRegister(RSP, valE);
   }
 }
 
 void pcUpdateStage(int icode, wordType valC, wordType valP, bool Cnd, wordType valM) {
-  if(icode == HALT || icode == NOP || icode == IRMOVQ || icode == RRMOVQ || icode == RMMOVQ || icode == MRMOVQ || icode == OPQ) {
+  if(icode == HALT || icode == NOP || icode == IRMOVQ || icode == RRMOVQ || icode == RMMOVQ || icode == MRMOVQ || icode == OPQ || icode == PUSHQ) {
     setPC(valP); 
   }
 
