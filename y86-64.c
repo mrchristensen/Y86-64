@@ -54,7 +54,7 @@ wordType evalOp(wordType valA, wordType valB, int ifun) {
   }
   else {
     printf("Error, ifun of %d does not match any mode of operation (ADD, SUB, AND, XOR)", ifun);
-    return NULL; //TODO fix this warning
+    return (wordType) NULL; //TODO fix this warning
   }
 }
 
