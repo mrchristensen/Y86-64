@@ -54,7 +54,7 @@ wordType evalOp(wordType valA, wordType valB, int ifun) {
   }
   else {
     printf("Error, ifun of %d does not match any mode of operation (ADD, SUB, AND, XOR)", ifun);
-    return (wordType) NULL; //TODO fix this warning
+    return (wordType) NULL;
   }
 }
 
@@ -92,10 +92,6 @@ void fetchStage(int *icode, int *ifun, int *rA, int *rB, wordType *valC, wordTyp
   if(*icode == JXX || *icode == CALL) { //JXX and CALL
     *valC = getByteFromMemory(pc + 1);
     *valP = pc + 9;
-  }
-
-  else {
-    printf("ERROR - icode not implemented: %d", *icode); //TODO Remove this?
   }
 }
 
